@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import com.example.eco_pr.databinding.FragmentHomeBinding
 
 private lateinit var binding: FragmentHomeBinding
+
+// Макар лох
 class HomeFragment : Fragment() {
 
     override fun onCreateView(
