@@ -11,13 +11,15 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.Objects
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var recordController: RecordController
-    private lateinit var decibelsArray:ArrayList<Double>
+    private val decibelsArray: ArrayList<Double> = arrayListOf()
+    private var switch:Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,17 +40,17 @@ class MainActivity : AppCompatActivity() {
         // Начать запись шума
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        // Остановить запись шума при закрытии активности
+    override fun onStop() {
+        super.onStop()
         stopRecordingNoise()
     }
+
 
     private fun startRecordingNoise() {
         recordController.start()
         var backgroundTask = GlobalScope.launch {
-            while(true){
-                delay(100)
+            while(switch){
+                delay(500)
                 addDecibels()
             }
         }
@@ -57,15 +59,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addDecibels(){
-        val decibelsArray: ArrayList<Double> = arrayListOf()
         val volume = recordController.getVolume().toDouble()
-        val decibels = Math.sqrt(volume) * 1.95
+        var decibels = Math.sqrt(volume) * 1.95
+        if(decibels > 160){
+            decibels = 160.0
+        }
         decibelsArray.add(decibels)
         Log.i("TAG", decibels.toString())
     }
 
     private fun stopRecordingNoise() {
+        switch = false
         recordController.stop()
+        Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
     }
 
