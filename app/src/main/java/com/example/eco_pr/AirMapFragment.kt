@@ -26,6 +26,8 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 import java.util.Locale
+import kotlin.math.cos
+import kotlin.math.sin
 
 class AirMapFragment : Fragment(), OnMapReadyCallback {
 
@@ -63,8 +65,6 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
         val cameraPosition = CameraPosition.Builder()
             .target(latLng)
             .zoom(15f)
-            .tilt(23f)
-            .bearing(10f)
             .build()
 
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
@@ -80,6 +80,8 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
                 }
             }
 
+            calculateHexagonCenters(mMap, 20)
+
             addAirQualityMarker(it, address)
         }
     }
@@ -90,8 +92,8 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
 
         Log.v("API_TEST", "${location.latitude} : ${location.longitude}")
 
-        val vertices = calculateHexagonVertices(location.latitude, location.longitude, 0.05)
-        drawHexagon(vertices, Color.argb(100, 255, 0, 0))
+//        val vertices = calculateHexagonVertices(location.latitude, location.longitude, 0.05)
+//        drawHexagon(vertices, Color.argb(100, 255, 0, 0))
 
         val request = Request.Builder()
             .url(url)
@@ -134,15 +136,13 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
 
     private fun calculateHexagonVertices(centerLat: Double, centerLng: Double, radius: Double): Array<DoubleArray> {
         val vertices = Array(6) { DoubleArray(2) }
-        var angleDeg: Double
-        var x: Double
-        var y: Double
+
+        val RADIUS_RATIO = 1 / cos(Math.toRadians(centerLat)) // Adjust for latitude distortion
 
         for (i in 0 until 6) {
-            angleDeg = 60.0 * i
-            val angleRad = Math.toRadians(angleDeg)
-            x = centerLng + radius * Math.cos(angleRad)
-            y = centerLat + radius * Math.sin(angleRad)
+            val angleRad = Math.PI / 3.0 * i
+            val x = centerLng + radius * RADIUS_RATIO * cos(angleRad)
+            val y = centerLat + radius * sin(angleRad)
             vertices[i][0] = y
             vertices[i][1] = x
         }
@@ -161,6 +161,77 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
         }
 
         mMap.addPolygon(polygonOptions)
+    }
+
+    private fun calculateHexagonCenters(map: GoogleMap, numHexagons: Int) {
+        val mapProjection = map.projection
+        val centerPoint = mapProjection.visibleRegion.latLngBounds.center
+
+        val zoomLevel = map.cameraPosition.zoom.toDouble()
+
+        // Determine the hexagon size based on map scale and number of hexagons
+        val hexagonSize = calculateHexagonSize(zoomLevel)
+
+        val hexagonRadius = calculateHexagonRadius(hexagonSize)
+
+        // Calculate offset between hexagons
+        val hexagonHorizontalSpacing = calculateHorizontalHexagonSpacing(hexagonSize)
+        val hexagonVerticalSpacing = calculateVerticalHexagonSpacing(hexagonSize)
+
+        // Calculate hexagon positions to cover the screen
+        val hexagonCenters = ArrayList<LatLng>()
+//        val numHexagonsPerRow = Math.ceil(Math.sqrt(numHexagons.toDouble())).toInt()
+
+        val hexagonsNumPerRow = 3
+        val hexagonsNumPerColumn = 18
+
+        val overallOffsetY = (hexagonsNumPerColumn / 3.5 * hexagonSize)
+        val overallOffsetX = (hexagonsNumPerRow * 1.2 * hexagonSize)
+
+        for (i in 0 until hexagonsNumPerRow) {
+            for (j in 0 until hexagonsNumPerColumn) {
+                var offsetY = j * hexagonVerticalSpacing;
+                var offsetX = i % 2 * hexagonHorizontalSpacing / 2 + i / 2 * hexagonHorizontalSpacing;
+
+                if (j % 2 == 0) {
+                    offsetX += hexagonSize * 1.5
+                }
+
+                val hexagonCenter = LatLng(centerPoint.latitude + offsetY - overallOffsetY, centerPoint.longitude + offsetX - overallOffsetX)
+                hexagonCenters.add(hexagonCenter)
+            }
+        }
+
+        for (center in hexagonCenters) {
+            val vertices = calculateHexagonVertices(center.latitude, center.longitude, hexagonRadius)
+            drawHexagon(vertices, Color.argb(100, 255, 0, 0))
+        }
+
+    }
+
+    private fun calculateHexagonSize(zoomLevel: Double): Double {
+        // Calculate hexagon size based on the map zoom level
+        // Adjust this calculation based on your requirements
+        return 100 / Math.pow(2.0, zoomLevel)
+    }
+
+    private fun calculateHexagonRadius(hexagonSize: Double): Double {
+        // Calculate the radius based on the hexagon size for proper coverage
+        // Consider the spacing and arrangement of hexagons to cover the screen
+        // Adjust this calculation based on your requirements
+        return hexagonSize / Math.sqrt(3.0) // Assuming regular hexagons
+    }
+
+    private fun calculateHorizontalHexagonSpacing(hexagonSize: Double): Double {
+        // Set the spacing between hexagons based on the hexagon size
+        // Adjust this value as needed for proper coverage
+        return hexagonSize * 6
+    }
+
+    private fun calculateVerticalHexagonSpacing(hexagonSize: Double): Double {
+        // Set the spacing between hexagons based on the hexagon size
+        // Adjust this value as needed for proper coverage
+        return hexagonSize / 2
     }
 
     companion object {
