@@ -50,14 +50,17 @@ class HomeFragment : Fragment() {
             countDownTimer = null
         } else {
             recordController.start()
+            var decibelsArray:ArrayList<Double> = arrayListOf()
             countDownTimer = object : CountDownTimer(10_000, VOLUME_UPDATE_DURATION) {
                 override fun onTick(p0: Long) {
                     val volume = recordController.getVolume()
-                    val decibels = (20 + volume / 235).toString()
+                    val decibels = 20 + volume / 235
+                    decibelsArray.add(decibels.toDouble())
                     handleVolume(volume)
                 }
 
                 override fun onFinish() {
+                    Log.i("TAG", decibelsArray.average().toString())
                 }
             }.apply {
                 start()
