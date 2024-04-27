@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
     private lateinit var location: Location
     private val LOCATION_PERMISSION_CODE = 2
     private var granted: Boolean = false
+    private lateinit var airMapFragment: AirMapFragment
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
@@ -97,7 +98,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
                     "MAPS_API",
                     "Последнее местоположение: ${location.latitude} - ${location.longitude}"
                 )
-                val airMapFragment =
+                airMapFragment =
                     AirMapFragment.newInstance(location.latitude, location.longitude)
                 supportFragmentManager
                     .beginTransaction()
@@ -114,6 +115,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
             override fun onClick(p0: View?) {
                 binding.layerB.setOnClickListener(object : View.OnClickListener {
                     override fun onClick(p0: View?) {
+                        (airMapFragment as UpdateMapListener).updateMap()
                         val dialog = MapChoiceSheet.newInstance(location.latitude, location.longitude)
                         dialog.show(supportFragmentManager, "MapChoiceSheet")
                     }
