@@ -1,11 +1,8 @@
-package com.example.eco_pr
-
-
 import android.content.Context
 import android.media.MediaRecorder
 import android.util.Log
 import java.io.File
-import java.lang.Exception
+import kotlin.math.log10
 
 class RecordController(private val context: Context) {
 
@@ -23,8 +20,17 @@ class RecordController(private val context: Context) {
         }
     }
 
+    fun getDecibels(): Double {
+        val amplitude = getVolume()
+        return if (amplitude > 0) {
+            20 * log10(amplitude / MAX_AMPLITUDE)
+        } else {
+            0.0
+        }
+    }
+
     private fun getAudioPath(): String {
-        return "${context.cacheDir.absolutePath}${File.pathSeparator}${System.currentTimeMillis()}.wav"
+        return "${context.cacheDir.absolutePath}${File.separator}${System.currentTimeMillis()}.wav"
     }
 
     fun stop() {
@@ -40,7 +46,8 @@ class RecordController(private val context: Context) {
 
     fun getVolume() = audioRecorder?.maxAmplitude ?: 0
 
-    private companion object {
+    companion object {
         private val TAG = RecordController::class.java.name
+        private const val MAX_AMPLITUDE = 32768.0
     }
 }
