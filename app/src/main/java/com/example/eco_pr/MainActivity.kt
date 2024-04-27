@@ -32,7 +32,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.Objects
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() , LocationListener{
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
     private lateinit var recordController: RecordController
     private val decibelsArray: ArrayList<Double> = arrayListOf()
     private var switch:Boolean = true
-
+    private lateinit var location: Location
     private val LOCATION_PERMISSION_CODE = 2
     private var granted: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,8 +90,8 @@ class MainActivity : AppCompatActivity() , LocationListener{
         // Получение последнего местоположения
         val prv = locationManager.getBestProvider(Criteria(), true)
         if (prv != null) {
-            val location =
-                locationManager.getLastKnownLocation(prv) // Получение последнего местоположения
+            location =
+                locationManager.getLastKnownLocation(prv)!! // Получение последнего местоположения
             if (location != null) {
                 Log.v(
                     "MAPS_API",
@@ -112,12 +112,14 @@ class MainActivity : AppCompatActivity() , LocationListener{
 
         binding.layerB.setOnClickListener(object : View.OnClickListener {
             override fun onClick(p0: View?) {
-                var dialog = BottomSheetDialog(this@MainActivity)
-                dialog.setContentView(R.layout.layer_sheet_dialog)
-                dialog.window?.setGravity(Gravity.BOTTOM)
-                dialog.show()
-            }
-        })
+                binding.layerB.setOnClickListener(object : View.OnClickListener {
+                    override fun onClick(p0: View?) {
+                        val dialog = MapChoiceSheet.newInstance(location.latitude, location.longitude)
+                        dialog.show(supportFragmentManager, "MapChoiceSheet")
+                    }
+
+            })
+        }})
     }
 
     override fun onRequestPermissionsResult(

@@ -26,8 +26,7 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 import java.util.Locale
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 class AirMapFragment : Fragment(), OnMapReadyCallback {
 

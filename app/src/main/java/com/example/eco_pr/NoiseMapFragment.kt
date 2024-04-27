@@ -18,6 +18,18 @@ class NoiseMapFragment : Fragment() {
 
         return inflater.inflate(R.layout.fragment_noise_map, container, false)
     }
+    companion object {
+        const val ARG_LATITUDE = "ARG_LATITUDE"
+        const val ARG_LONGITUDE = "ARG_LONGITUDE"
 
+        fun newInstance(latitude: Double, longitude: Double): NoiseMapFragment {
+            val args = Bundle()
+            args.putDouble(ARG_LATITUDE, latitude)
+            args.putDouble(ARG_LONGITUDE, longitude)
+            val fragment = NoiseMapFragment()
+            fragment.arguments = args
+            return fragment
+        }
+    }
 
 }
