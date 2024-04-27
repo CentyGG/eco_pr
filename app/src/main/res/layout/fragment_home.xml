@@ -3,14 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".HomeFragment">
+    tools:context=".NoiseFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <View
-        android:layout_gravity="center"
-        android:id="@+id/start_btn"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/hello_blank_fragment"
         android:background="@color/black"/>
 
 </FrameLayout>
