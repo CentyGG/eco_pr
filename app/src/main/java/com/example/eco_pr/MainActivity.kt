@@ -26,23 +26,23 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Инициализация RecordController
         recordController = RecordController(this)
 
-        // Запрос разрешений
         ActivityCompat.requestPermissions(
             this,
             arrayOf(Manifest.permission.RECORD_AUDIO),
             777
         )
-
-        startRecordingNoise()
-        // Начать запись шума
     }
 
     override fun onStop() {
         super.onStop()
         stopRecordingNoise()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        startRecordingNoise()
     }
 
 
@@ -73,11 +73,5 @@ class MainActivity : AppCompatActivity() {
         recordController.stop()
         Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
-    }
-
-    companion object {
-        private const val MAX_RECORD_AMPLITUDE = 32768.0
-        private const val VOLUME_UPDATE_DURATION = 100L
-        private val interpolator = OvershootInterpolator()
     }
 }
