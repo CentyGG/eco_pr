@@ -1,13 +1,10 @@
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.example.eco_pr.databinding.ActivityMainBinding
-import RecordController
 import android.os.CountDownTimer
 import android.util.Log
-import android.view.View
 import android.view.animation.OvershootInterpolator
 import androidx.core.app.ActivityCompat
-import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,7 +45,6 @@ class MainActivity : AppCompatActivity() {
                 val volume = recordController.getVolume()
                 val decibels = 20 + volume / 235
                 decibelsArray.add(decibels.toDouble())
-                handleVolume(volume)
             }
 
             override fun onFinish() {
@@ -63,11 +59,6 @@ class MainActivity : AppCompatActivity() {
         recordController.stop()
         countDownTimer?.cancel()
         countDownTimer = null
-    }
-
-    private fun handleVolume(volume: Int) {
-        val scale = min(8.0, volume / MAX_RECORD_AMPLITUDE + 1.0).toFloat()
-        // Добавьте здесь логику для обработки изменения громкости, если необходимо
     }
 
     companion object {
