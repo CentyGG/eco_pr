@@ -52,13 +52,12 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        val lan = arguments?.getDouble(ARG_LATITUDE) ?: 52.28
-        val lon = arguments?.getDouble(ARG_LONGITUDE) ?: 104.3
+        val startLat = arguments?.getDouble(ARG_LATITUDE) ?: 52.28
+        val startLon = arguments?.getDouble(ARG_LONGITUDE) ?: 104.3
 
-        Log.v("MAPS_API", "$lan - $lon")
+        Log.v("MAPS_API", "$startLat - $startLon")
 
-        val latLng = LatLng(lan, lon)
-        mMap.addMarker(MarkerOptions().position(latLng).title("I'm here!"))
+        val latLng = LatLng(startLat, startLon)
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
 
         val cameraPosition = CameraPosition.Builder()
@@ -92,17 +91,7 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
         Log.v("API_TEST", "${location.latitude} : ${location.longitude}")
 
         val vertices = calculateHexagonVertices(location.latitude, location.longitude, 0.05)
-
-        val polygonOptions = PolygonOptions()
-            .strokeColor(Color.RED)
-            .strokeWidth(2f)
-            .fillColor(Color.argb(100, 255, 0, 0))
-
-        for (i in 0 until 6) {
-            polygonOptions.add(LatLng(vertices[i][0], vertices[i][1]))
-        }
-
-        mMap.addPolygon(polygonOptions)
+        drawHexagon(vertices, Color.argb(100, 255, 0, 0))
 
         val request = Request.Builder()
             .url(url)
@@ -159,6 +148,19 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
         }
 
         return vertices
+    }
+
+    private fun drawHexagon(vertices: Array<DoubleArray>, color: Int) {
+        val polygonOptions = PolygonOptions()
+            .strokeColor(Color.RED)
+            .strokeWidth(2f)
+            .fillColor(color)
+
+        for (i in 0 until 6) {
+            polygonOptions.add(LatLng(vertices[i][0], vertices[i][1]))
+        }
+
+        mMap.addPolygon(polygonOptions)
     }
 
     companion object {
