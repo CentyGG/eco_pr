@@ -39,20 +39,6 @@ class MainActivity : AppCompatActivity() {
 
         startRecordingNoise()
         // Начать запись шума
-        val db = FirebaseFirestore.getInstance()
-        val data = hashMapOf(
-            "address" to "your_address_value",
-            "sound" to decibelsArray.average().toString()
-        )
-        db.collection("sound")
-            .document("27.04.2024")
-            .set(data)
-            .addOnSuccessListener {
-                // DocumentSnapshot added with ID: documentReference.id
-            }
-            .addOnFailureListener { e ->
-                // Log the error or handle the failure
-            }
 
     }
 
@@ -89,6 +75,20 @@ class MainActivity : AppCompatActivity() {
         recordController.stop()
         Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
+        val db = FirebaseFirestore.getInstance()
+        val data = hashMapOf(
+            "address" to "your_address_value",
+            "sound" to decibelsArray.average().toString()
+        )
+        db.collection("sound")
+            .document("27.04.2024")
+            .set(data)
+            .addOnSuccessListener {
+                // DocumentSnapshot added with ID: documentReference.id
+            }
+            .addOnFailureListener { e ->
+                // Log the error or handle the failure
+            }
     }
 
     companion object {
