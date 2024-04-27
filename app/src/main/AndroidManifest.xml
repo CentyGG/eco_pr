@@ -20,6 +20,7 @@
             android:value="AIzaSyCco35ggNe-kVq_HjhzvGGv2ZWNYh3LEHE" />
         <activity
             android:name="MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

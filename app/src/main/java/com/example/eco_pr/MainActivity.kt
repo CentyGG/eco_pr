@@ -33,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.security.Timestamp
+import java.text.ChoiceFormat.nextDouble
 import java.time.Instant
 import java.time.Instant.now
 import java.time.LocalDate.now
@@ -189,20 +190,23 @@ class MainActivity : AppCompatActivity() , LocationListener{
         Log.i("TAG", decibelsArray.average().toString())
         // Начать запись шума
         val db = FirebaseFirestore.getInstance()
-        val data = hashMapOf(
-            "sound" to decibelsArray.average().toString(),
-            "date" to "date",
-            "location" to "your_location_value"
-        )
-
-        db.collection("sound")
-            .add(data)
-            .addOnSuccessListener { documentReference ->
-                Log.d("TAG", "DocumentSnapshot added with ID: ${documentReference.id}")
+        var i = 37.352366509
+        var j = 55.575162222
+        while (i < 37.850871148){
+            while(j < 55.903656382){
+                val data = hashMapOf(
+                    "latitude" to j,
+                    "longitude" to i,
+                    "sound" to kotlin.random.Random.nextDouble(74.0, 83.0)
+                )
+                db.collection("sound")
+                    .add(data)
+                    .addOnSuccessListener { Log.i("TAG", "Success") }
+                    .addOnFailureListener {  Log.i("TAG", "Error")}
+                j += 0.0000001
             }
-            .addOnFailureListener { e ->
-                Log.e("TAG", "Error adding document", e)
-            }
+            i += 0.0000001
+        }
     }
 
     override fun onLocationChanged(location: Location) {
