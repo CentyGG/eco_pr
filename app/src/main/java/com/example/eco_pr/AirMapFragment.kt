@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.example.eco_pr.databinding.FragmentAirMapBinding
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -38,7 +39,7 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
     private val apiKey = "399161e1dbb1ab97bd00240c864bf5cbac035c2d"
 
     private val polygonList: MutableList<Polygon> = mutableListOf()
-    private val locationsAirQualityMap = HashMap<LatLng, Int>()
+    private val locationsAirQualityMap = HashMap<LatLng, JSONObject>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -61,8 +62,6 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
         val startLat = arguments?.getDouble(ARG_LATITUDE) ?: 52.28
         val startLon = arguments?.getDouble(ARG_LONGITUDE) ?: 104.3
 
-        Log.v("MAPS_API", "$startLat - $startLon")
-
         val latLng = LatLng(startLat, startLon)
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
 
@@ -73,19 +72,16 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
 
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 
-        mMap.setOnMapClickListener {
-            updateMap()
+        mMap.setOnPolygonClickListener { polygon ->
+            val center = polygon.tag as LatLng
+            val data = locationsAirQualityMap[center]
+            Toast.makeText(this.requireContext(), "Air Quality Index: ${data?.getInt("agi").toString()}", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun getAirQualityFromLocation(location: LatLng, hexagonCenter: LatLng, hexagonRadius: Double) {
         val client = OkHttpClient()
         val url = "https://api.waqi.info/feed/geo:${location.latitude};${location.longitude}/?token=$apiKey"
-
-        Log.v("API_TEST", "${location.latitude} : ${location.longitude}")
-
-//        val vertices = calculateHexagonVertices(location.latitude, location.longitude, 0.05)
-//        drawHexagon(vertices, Color.argb(100, 255, 0, 0))
 
         val request = Request.Builder()
             .url(url)
@@ -99,13 +95,10 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
                     val status = json.getString("status")
                     if (status == "ok") {
                         val data = json.getJSONObject("data")
-                        val aqi = data.getInt("aqi")
 
                         requireActivity().runOnUiThread {
-                            Log.v("API_TEST", aqi.toString())
-                            locationsAirQualityMap.put(hexagonCenter, aqi);
                             val vertices = calculateHexagonVertices(hexagonCenter.latitude, hexagonCenter.longitude, hexagonRadius)
-                            drawHexagon(vertices, aqi)
+                            drawHexagon(hexagonCenter, vertices, data)
                         }
                     } else {
                         requireActivity().runOnUiThread {
@@ -140,7 +133,8 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
         return vertices
     }
 
-    private fun drawHexagon(vertices: Array<DoubleArray>, aqi: Int) {
+    private fun drawHexagon(hexagonCenter: LatLng, vertices: Array<DoubleArray>, data: JSONObject) {
+        val aqi = data.getInt("aqi")
         val color = when(aqi) {
             in 1..10 -> ContextCompat.getColor(this.requireContext(), R.color.dark_green);
             in 11..20 -> ContextCompat.getColor(this.requireContext(), R.color.light_green);
@@ -152,12 +146,15 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
         val polygonOptions = PolygonOptions()
             .strokeWidth(2f)
             .fillColor(color)
+            .clickable(true)
 
         for (i in 0 until 6) {
             polygonOptions.add(LatLng(vertices[i][0], vertices[i][1]))
         }
 
         val polygon = mMap.addPolygon(polygonOptions)
+        polygon.tag = hexagonCenter
+        locationsAirQualityMap.put(hexagonCenter, data)
         polygonList.add(polygon)
     }
 
@@ -166,6 +163,7 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
             polygon.remove() // Remove the polygon from the map
         }
         polygonList.clear() // Clear the list of Polygon objects
+        locationsAirQualityMap.clear()
     }
 
     private fun calculateHexagonCenters(map: GoogleMap, numHexagons: Int) {
