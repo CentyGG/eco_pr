@@ -30,7 +30,7 @@ import java.io.IOException
 import java.util.Locale
 import kotlin.math.*
 
-class AirMapFragment : Fragment(), OnMapReadyCallback {
+class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
 
     private lateinit var binding: FragmentAirMapBinding
 
@@ -74,8 +74,7 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 
         mMap.setOnMapClickListener {
-            clearAllPolygons()
-            calculateHexagonCenters(mMap, 20)
+            updateMap()
         }
     }
 
@@ -251,5 +250,10 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
             fragment.arguments = args
             return fragment
         }
+    }
+
+    override fun updateMap() {
+        clearAllPolygons()
+        calculateHexagonCenters(mMap, 20)
     }
 }
