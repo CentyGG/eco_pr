@@ -51,8 +51,12 @@ class NoiseFragment : Fragment() {
             countDownTimer = object : CountDownTimer(10_000, VOLUME_UPDATE_DURATION) {
                 override fun onTick(p0: Long) {
                     val volume = recordController.getVolume()
-                    val decibels = 20 + volume / 235
-                    decibelsArray.add(decibels.toDouble())
+                    var decibels = Math.sqrt(volume.toDouble()) * 1.5
+                    if (decibels > 160){
+                        decibels = 160.0
+                    }
+                    decibelsArray.add(decibels)
+                    Log.i("TAG", decibels.toString())
                     handleVolume(volume)
                 }
 
