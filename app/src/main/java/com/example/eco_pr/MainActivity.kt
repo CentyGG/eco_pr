@@ -6,6 +6,8 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import com.example.eco_pr.R
+import RecordController
+import android.Manifest
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -20,15 +22,27 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import android.util.Log
+import android.view.animation.OvershootInterpolator
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.example.eco_pr.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import java.util.Objects
+
 
 class MainActivity : AppCompatActivity() , LocationListener{
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var binding: ActivityMainBinding
-    private lateinit var navController: NavController
-    private lateinit var navHostFragment: NavHostFragment
+    private lateinit var recordController: RecordController
+    private val decibelsArray: ArrayList<Double> = arrayListOf()
+    private var switch:Boolean = true
 
     private val LOCATION_PERMISSION_CODE = 2
     private var granted: Boolean = false
@@ -121,13 +135,80 @@ class MainActivity : AppCompatActivity() , LocationListener{
             }else{
                 granted=false //разрешение пришло, но мы его отклонили
             }
+        // Инициализация RecordController
+        recordController = RecordController(this)
+
+        // Запрос разрешений
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.RECORD_AUDIO),
+            777
+        )
+
+        startRecordingNoise()
+        // Начать запись шума
+        val db = FirebaseFirestore.getInstance()
+        val data = hashMapOf(
+            "address" to "your_address_value",
+            "sound" to decibelsArray.average().toString()
+        )
+        db.collection("sound")
+            .document("27.04.2024")
+            .set(data)
+            .addOnSuccessListener {
+                // DocumentSnapshot added with ID: documentReference.id
+            }
+            .addOnFailureListener { e ->
+                // Log the error or handle the failure
+            }
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stopRecordingNoise()
+    }
+
+
+    private fun startRecordingNoise() {
+        recordController.start()
+        var backgroundTask = GlobalScope.launch {
+            while(switch){
+                delay(500)
+                addDecibels()
+            }
+        }
+        backgroundTask.start()
+
+    }
+
+    private fun addDecibels(){
+        val volume = recordController.getVolume().toDouble()
+        var decibels = Math.sqrt(volume) * 1.95
+        if(decibels > 160){
+            decibels = 160.0
+        }
+        decibelsArray.add(decibels)
+        Log.i("TAG", decibels.toString())
+    }
 
         }
 
 
+    private fun stopRecordingNoise() {
+        switch = false
+        recordController.stop()
+        Log.i("TAG", "_________")
+        Log.i("TAG", decibelsArray.average().toString())
     }
 
     override fun onLocationChanged(location: Location) {
         Log.v("MAPS_API", "Локация изменилась ${location.latitude} - ${location.longitude}")
+    }
+
+    companion object {
+        private const val MAX_RECORD_AMPLITUDE = 32768.0
+        private const val VOLUME_UPDATE_DURATION = 100L
+        private val interpolator = OvershootInterpolator()
     }
 }

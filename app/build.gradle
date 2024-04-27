@@ -47,6 +47,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment-ktx:2.7.7'
     implementation 'com.google.firebase:firebase-firestore:24.11.1'
     implementation('com.google.firebase:firebase-bom:32.8.1')
+    implementation 'com.google.firebase:firebase-firestore-ktx:24.11.1'
     testImplementation 'junit:junit:4.13.2'
     implementation("com.uber:h3:4.1.1")
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
