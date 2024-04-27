@@ -26,6 +26,9 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 import java.util.Locale
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class AirMapFragment : Fragment(), OnMapReadyCallback {
 
@@ -134,15 +137,13 @@ class AirMapFragment : Fragment(), OnMapReadyCallback {
 
     private fun calculateHexagonVertices(centerLat: Double, centerLng: Double, radius: Double): Array<DoubleArray> {
         val vertices = Array(6) { DoubleArray(2) }
-        var angleDeg: Double
-        var x: Double
-        var y: Double
+
+        val RADIUS_RATIO = 1 / cos(Math.toRadians(centerLat)) // Adjust for latitude distortion
 
         for (i in 0 until 6) {
-            angleDeg = 60.0 * i
-            val angleRad = Math.toRadians(angleDeg)
-            x = centerLng + radius * Math.cos(angleRad)
-            y = centerLat + radius * Math.sin(angleRad)
+            val angleRad = Math.PI / 3.0 * i
+            val x = centerLng + radius * RADIUS_RATIO * cos(angleRad)
+            val y = centerLat + radius * sin(angleRad)
             vertices[i][0] = y
             vertices[i][1] = x
         }
