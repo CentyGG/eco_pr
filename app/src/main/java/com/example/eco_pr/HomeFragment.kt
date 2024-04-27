@@ -2,6 +2,7 @@ package com.example.eco_pr
 
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +16,7 @@ class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
     private lateinit var audioButton: View
-    private lateinit var recordController: RecordController // Перемещаем инициализацию в onCreateView
+    private lateinit var recordController: RecordController
     private var countDownTimer: CountDownTimer? = null
 
     override fun onCreateView(
@@ -26,11 +27,11 @@ class HomeFragment : Fragment() {
         val view = binding.root
         audioButton = binding.startBtn
         audioButton.setOnClickListener { onButtonClicked() }
-        recordController = RecordController(requireActivity()) // Инициализируем recordController
+        recordController = RecordController(requireActivity())
 
 
         ActivityCompat.requestPermissions(
-            requireActivity(), // Используйте requireActivity() для доступа к Activity из фрагмента
+            requireActivity(),
             arrayOf(android.Manifest.permission.RECORD_AUDIO),
             777
         )
@@ -48,6 +49,7 @@ class HomeFragment : Fragment() {
             countDownTimer = object : CountDownTimer(60_000, VOLUME_UPDATE_DURATION) {
                 override fun onTick(p0: Long) {
                     val volume = recordController.getVolume()
+                    Log.i("TAG", volume.toString())
                     handleVolume(volume)
                 }
 
