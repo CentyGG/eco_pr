@@ -183,7 +183,17 @@ class MainActivity : AppCompatActivity() , LocationListener{
         recordController.stop()
         Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
-        // Начать запись шума
+
+        // Проверка значения шума перед отправкой в Firebase
+        if (decibelsArray.isNotEmpty()) {
+            val averageDecibels = decibelsArray.average()
+            if (averageDecibels < YOUR_THRESHOLD_VALUE || averageDecibels > ANOTHER_THRESHOLD_VALUE) {
+                Log.i("TAG", "Decibels value is out of range, not uploading to Firebase.")
+                return // Не выгружаем данные в Firebase, если значение шума не в допустимом диапазоне
+            }
+        }
+
+        // Продолжаем с записью шума в Firebase, если прошли проверку
         val db = FirebaseFirestore.getInstance()
         val data = hashMapOf(
             "address" to "your_address_value",
@@ -193,10 +203,10 @@ class MainActivity : AppCompatActivity() , LocationListener{
             .document("27.04.2024")
             .set(data)
             .addOnSuccessListener {
-                // DocumentSnapshot added with ID: documentReference.id
+                // Данные успешно отправлены
             }
             .addOnFailureListener { e ->
-                // Log the error or handle the failure
+                // Обработка ошибки
             }
     }
 
@@ -205,8 +215,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
     }
 
     companion object {
-        private const val MAX_RECORD_AMPLITUDE = 32768.0
-        private const val VOLUME_UPDATE_DURATION = 100L
-        private val interpolator = OvershootInterpolator()
+        private const val YOUR_THRESHOLD_VALUE = 20.0 // Установите необходимые диапазоны значений шума
+        private const val ANOTHER_THRESHOLD_VALUE = 160.0
     }
 }
