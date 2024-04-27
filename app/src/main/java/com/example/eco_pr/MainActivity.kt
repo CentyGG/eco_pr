@@ -120,13 +120,15 @@ class MainActivity : AppCompatActivity() , LocationListener{
             override fun onClick(p0: View?) {
                 binding.layerB.setOnClickListener(object : View.OnClickListener {
                     override fun onClick(p0: View?) {
-                        (airMapFragment as UpdateMapListener).updateMap()
                         val dialog = MapChoiceSheet.newInstance(location.latitude, location.longitude)
                         dialog.show(supportFragmentManager, "MapChoiceSheet")
                     }
 
             })
         }})
+        binding.updateB.setOnClickListener {
+            (airMapFragment as UpdateMapListener).updateMap()
+        }
     }
 
     override fun onRequestPermissionsResult(
