@@ -109,14 +109,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
         //navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         //navController = navHostFragment.findNavController()
 
-        binding.searchB.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(p0: View?) {
-                var dialog = BottomSheetDialog(this@MainActivity)
-                dialog.setContentView(R.layout.search_sheet_dialog)
-                dialog.window?.setGravity(Gravity.BOTTOM)
-                dialog.show()
-            }
-        })
+
         binding.layerB.setOnClickListener(object : View.OnClickListener {
             override fun onClick(p0: View?) {
                 var dialog = BottomSheetDialog(this@MainActivity)
