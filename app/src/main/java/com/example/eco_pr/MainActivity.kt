@@ -32,6 +32,11 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.security.Timestamp
+import java.time.Instant
+import java.time.Instant.now
+import java.time.LocalDate.now
+import java.time.LocalDateTime.now
 import java.util.*
 
 
@@ -181,17 +186,18 @@ class MainActivity : AppCompatActivity() , LocationListener{
         // Начать запись шума
         val db = FirebaseFirestore.getInstance()
         val data = hashMapOf(
-            "address" to "your_address_value",
-            "sound" to decibelsArray.average().toString()
+            "sound" to decibelsArray.average().toString(),
+            "date" to "date",
+            "location" to "your_location_value"
         )
+
         db.collection("sound")
-            .document("27.04.2024")
-            .set(data)
-            .addOnSuccessListener {
-                // DocumentSnapshot added with ID: documentReference.id
+            .add(data)
+            .addOnSuccessListener { documentReference ->
+                Log.d("TAG", "DocumentSnapshot added with ID: ${documentReference.id}")
             }
             .addOnFailureListener { e ->
-                // Log the error or handle the failure
+                Log.e("TAG", "Error adding document", e)
             }
     }
 

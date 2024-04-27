@@ -41,4 +41,26 @@
 
     </androidx.cardview.widget.CardView>
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/update_b"
+        app:strokeWidth="3dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:cardCornerRadius="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layer_b"
+        android:layout_marginTop="30dp"
+        app:shapeAppearanceOverlay="@style/circleImageView"
+        android:layout_marginEnd="12dp"
+        android:backgroundTint="@android:color/transparent">
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/ic_update" />
+
+    </androidx.cardview.widget.CardView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
