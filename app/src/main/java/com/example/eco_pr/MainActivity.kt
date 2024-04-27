@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
 
         //navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         //navController = navHostFragment.findNavController()
-
+        //Макс лох
 
         binding.layerB.setOnClickListener(object : View.OnClickListener {
             override fun onClick(p0: View?) {
