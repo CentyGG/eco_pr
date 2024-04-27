@@ -48,6 +48,11 @@ class MainActivity : AppCompatActivity() {
         stopRecordingNoise()
     }
 
+    override fun onResume() {
+        super.onResume()
+        switch=true
+        startRecordingNoise()
+    }
 
     private fun startRecordingNoise() {
         recordController.start()
