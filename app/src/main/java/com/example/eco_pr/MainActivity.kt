@@ -1,31 +1,38 @@
-package com.example.eco_pr
 import RecordController
 import android.Manifest
+import android.content.Context.LOCATION_SERVICE
+import android.content.pm.PackageManager
+import android.location.Criteria
+import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.animation.OvershootInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.example.eco_pr.R
 import com.example.eco_pr.databinding.ActivityMainBinding
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.Objects
-
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var recordController: RecordController
     private val decibelsArray: ArrayList<Double> = arrayListOf()
-    private var switch:Boolean = true
+    private var switch: Boolean = true
+    private lateinit var locationManager: LocationManager
+    private val LOCATION_PERMISSION_CODE = 2
+    private var granted: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
         // Инициализация RecordController
         recordController = RecordController(this)
@@ -33,14 +40,25 @@ class MainActivity : AppCompatActivity() {
         // Запрос разрешений
         ActivityCompat.requestPermissions(
             this,
-            arrayOf(Manifest.permission.RECORD_AUDIO),
+            arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION),
             777
         )
 
         startRecordingNoise()
-        // Начать запись шума
-
-
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Запрос разрешения, если оно не было предоставлено ранее
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_CODE
+            )
+        } else {
+            granted = true // Устанавливаем флаг в true, если разрешение уже было предоставлено
+        }
     }
 
     override fun onStop() {
@@ -50,26 +68,27 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        switch=true
+        switch = true
         startRecordingNoise()
     }
 
     private fun startRecordingNoise() {
         recordController.start()
-        var backgroundTask = GlobalScope.launch {
-            while(switch){
+        val backgroundTask = GlobalScope.launch {
+            while (switch) {
                 delay(500)
                 addDecibels()
             }
         }
         backgroundTask.start()
-
     }
 
-    private fun addDecibels(){
+
+
+    private fun addDecibels() {
         val volume = recordController.getVolume().toDouble()
         var decibels = Math.sqrt(volume) * 1.95
-        if(decibels > 160){
+        if (decibels > 160) {
             decibels = 160.0
         }
         decibelsArray.add(decibels)
@@ -95,11 +114,5 @@ class MainActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 // Log the error or handle the failure
             }
-    }
-
-    companion object {
-        private const val MAX_RECORD_AMPLITUDE = 32768.0
-        private const val VOLUME_UPDATE_DURATION = 100L
-        private val interpolator = OvershootInterpolator()
     }
 }
