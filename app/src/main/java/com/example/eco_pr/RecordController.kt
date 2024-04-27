@@ -20,14 +20,7 @@ class RecordController(private val context: Context) {
         }
     }
 
-    fun getDecibels(): Double {
-        val amplitude = getVolume()
-        return if (amplitude > 0) {
-            20 * log10(amplitude / MAX_AMPLITUDE)
-        } else {
-            0.0
-        }
-    }
+
 
     private fun getAudioPath(): String {
         return "${context.cacheDir.absolutePath}${File.separator}${System.currentTimeMillis()}.wav"
