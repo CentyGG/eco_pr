@@ -20,6 +20,7 @@ class NoiseFragment : Fragment() {
     private lateinit var recordController: RecordController // Перемещаем инициализацию в onCreateView
     private var countDownTimer: CountDownTimer? = null
 
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
