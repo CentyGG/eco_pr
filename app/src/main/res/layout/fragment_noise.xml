@@ -11,6 +11,6 @@ tools:context=".HomeFragment">
     android:id="@+id/start_btn"
     android:layout_width="100dp"
     android:layout_height="100dp"
-    android:background="@color/black"/>
+    android:background="@drawable/oval"/>
 
 </FrameLayout>
