@@ -7,6 +7,7 @@ import android.view.animation.OvershootInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.eco_pr.databinding.ActivityMainBinding
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -26,23 +27,38 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Инициализация RecordController
         recordController = RecordController(this)
 
+        // Запрос разрешений
         ActivityCompat.requestPermissions(
             this,
             arrayOf(Manifest.permission.RECORD_AUDIO),
             777
         )
+
+        startRecordingNoise()
+        // Начать запись шума
+        val db = FirebaseFirestore.getInstance()
+        val data = hashMapOf(
+            "address" to "your_address_value",
+            "sound" to decibelsArray.average().toString()
+        )
+        db.collection("sound")
+            .document("27.04.2024")
+            .set(data)
+            .addOnSuccessListener {
+                // DocumentSnapshot added with ID: documentReference.id
+            }
+            .addOnFailureListener { e ->
+                // Log the error or handle the failure
+            }
+
     }
 
     override fun onStop() {
         super.onStop()
         stopRecordingNoise()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        startRecordingNoise()
     }
 
 
@@ -73,5 +89,11 @@ class MainActivity : AppCompatActivity() {
         recordController.stop()
         Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
+    }
+
+    companion object {
+        private const val MAX_RECORD_AMPLITUDE = 32768.0
+        private const val VOLUME_UPDATE_DURATION = 100L
+        private val interpolator = OvershootInterpolator()
     }
 }
