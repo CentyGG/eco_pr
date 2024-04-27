@@ -7,6 +7,7 @@ import android.view.animation.OvershootInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.eco_pr.databinding.ActivityMainBinding
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -38,6 +39,21 @@ class MainActivity : AppCompatActivity() {
 
         startRecordingNoise()
         // Начать запись шума
+        val db = FirebaseFirestore.getInstance()
+        val data = hashMapOf(
+            "address" to "your_address_value",
+            "sound" to decibelsArray.average().toString()
+        )
+        db.collection("sound")
+            .document("27.04.2024")
+            .set(data)
+            .addOnSuccessListener {
+                // DocumentSnapshot added with ID: documentReference.id
+            }
+            .addOnFailureListener { e ->
+                // Log the error or handle the failure
+            }
+
     }
 
     override fun onStop() {
