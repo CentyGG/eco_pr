@@ -53,7 +53,9 @@ class HomeFragment : Fragment() {
             countDownTimer = object : CountDownTimer(60_000, VOLUME_UPDATE_DURATION) {
                 override fun onTick(p0: Long) {
                     val volume = recordController.getVolume()
-                    Log.i("TAG", getDecibels(volume).toString());
+                    Log.i("TAG", volume.toString());
+                    /*Log.i("TAG", getDecibels(volume).toString());
+                    Log.i("TAG", "______________________________")*/
                     handleVolume(volume)
                 }
 
@@ -77,7 +79,7 @@ class HomeFragment : Fragment() {
     private fun getDecibels(volume: Int): Double {
         val referenceAmplitude =  32768.0 // Используем максимальную амплитуду в качестве опорной
         return if (volume > 0) {
-            abs(20 * log10(volume / referenceAmplitude))
+            20 * log10(volume / referenceAmplitude)
         } else {
             0.0
         }
