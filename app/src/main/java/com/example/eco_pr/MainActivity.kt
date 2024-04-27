@@ -1,19 +1,23 @@
 package com.example.eco_pr
 import RecordController
 import android.Manifest
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.util.Log
 import android.view.animation.OvershootInterpolator
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.eco_pr.databinding.ActivityMainBinding
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var recordController: RecordController
-    private var countDownTimer: CountDownTimer? = null
+    private lateinit var decibelsArray:ArrayList<Double>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,8 +34,8 @@ class MainActivity : AppCompatActivity() {
             777
         )
 
-        // Начать запись шума
         startRecordingNoise()
+        // Начать запись шума
     }
 
     override fun onDestroy() {
@@ -42,26 +46,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun startRecordingNoise() {
         recordController.start()
-        val decibelsArray: ArrayList<Double> = arrayListOf()
-        countDownTimer = object : CountDownTimer(10_000, VOLUME_UPDATE_DURATION) {
-            override fun onTick(p0: Long) {
-                val volume = recordController.getVolume()
-                val decibels = 20 + volume / 235
-                decibelsArray.add(decibels.toDouble())
+        var backgroundTask = GlobalScope.launch {
+            while(true){
+                delay(100)
+                addDecibels()
             }
-
-            override fun onFinish() {
-                Log.i("TAG", decibelsArray.average().toString())
-            }
-        }.apply {
-            start()
         }
+        backgroundTask.start()
+
+    }
+
+    private fun addDecibels(){
+        val decibelsArray: ArrayList<Double> = arrayListOf()
+        val volume = recordController.getVolume().toDouble()
+        val decibels = Math.sqrt(volume) * 1.95
+        decibelsArray.add(decibels)
+        Log.i("TAG", decibels.toString())
     }
 
     private fun stopRecordingNoise() {
         recordController.stop()
-        countDownTimer?.cancel()
-        countDownTimer = null
+        Log.i("TAG", decibelsArray.average().toString())
     }
 
     companion object {
