@@ -6,7 +6,6 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import com.example.eco_pr.R
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -25,7 +24,7 @@ import com.example.eco_pr.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() , LocationListener{
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
@@ -36,7 +35,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -65,21 +65,27 @@ class MainActivity : AppCompatActivity() {
         // Получение последнего местоположения
         val prv = locationManager.getBestProvider(Criteria(), true)
         if (prv != null) {
-            val location = locationManager.getLastKnownLocation(prv) // Получение последнего местоположения
+            val location =
+                locationManager.getLastKnownLocation(prv) // Получение последнего местоположения
             if (location != null) {
-                Log.v("MAPS_API", "Последнее местоположение: ${location.latitude} - ${location.longitude}")
-                val airMapFragment = AirMapFragment.newInstance(location.latitude, location.longitude)
+                Log.v(
+                    "MAPS_API",
+                    "Последнее местоположение: ${location.latitude} - ${location.longitude}"
+                )
+                val airMapFragment =
+                    AirMapFragment.newInstance(location.latitude, location.longitude)
                 supportFragmentManager
                     .beginTransaction()
                     .add(R.id.nav_host_fragment, airMapFragment)
                     .commit()
             }
         }
-    }
-        navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+
+        navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.findNavController()
 
-        binding.searchB.setOnClickListener(object : View.OnClickListener{
+        binding.searchB.setOnClickListener(object : View.OnClickListener {
             override fun onClick(p0: View?) {
                 var dialog = BottomSheetDialog(this@MainActivity)
                 dialog.setContentView(R.layout.search_sheet_dialog)
@@ -87,7 +93,7 @@ class MainActivity : AppCompatActivity() {
                 dialog.show()
             }
         })
-        binding.layerB.setOnClickListener(object : View.OnClickListener{
+        binding.layerB.setOnClickListener(object : View.OnClickListener {
             override fun onClick(p0: View?) {
                 var dialog = BottomSheetDialog(this@MainActivity)
                 dialog.setContentView(R.layout.layer_sheet_dialog)
@@ -95,6 +101,7 @@ class MainActivity : AppCompatActivity() {
                 dialog.show()
             }
         })
+    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int, // эта переменная возвращает значение от LPC в зависимости от того, выдано оно или нет

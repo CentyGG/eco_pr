@@ -27,6 +27,7 @@
             android:layout_width="200dp"
             android:layout_height="120dp"
             android:layout_gravity="center"
+            android:textColor="@color/black"
             android:textOff="Air"
             android:textOn="Noise"
             android:thumb="@drawable/thumb"
