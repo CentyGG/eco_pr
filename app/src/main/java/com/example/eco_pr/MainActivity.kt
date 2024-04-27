@@ -35,12 +35,12 @@ import kotlinx.coroutines.launch
 import java.util.Objects
 
 
-class MainActivity : AppCompatActivity() , LocationListener{
+class MainActivity : AppCompatActivity() , LocationListener {
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var binding: ActivityMainBinding
     private lateinit var recordController: RecordController
     private val decibelsArray: ArrayList<Double> = arrayListOf()
-    private var switch:Boolean = true
+    private var switch: Boolean = true
 
     private val LOCATION_PERMISSION_CODE = 2
     private var granted: Boolean = false
@@ -133,17 +133,18 @@ class MainActivity : AppCompatActivity() , LocationListener{
         grantResults: IntArray //переменна, в которой содержится количество разрешений
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults) //обратная функция
-        if(requestCode == LOCATION_PERMISSION_CODE){ //проверка на то, является ли RC тем же разрешением
+        if (requestCode == LOCATION_PERMISSION_CODE) { //проверка на то, является ли RC тем же разрешением
             granted = true //если это так, то присваиваем true
-            if(grantResults.size>0){ //проверка на то, что разрешения все таки выданы и они не отрицательные
-                for( i in  grantResults){ // проверка на те разрешения, которые нас интересуют среди всех разрешений
-                    if (i != PackageManager.PERMISSION_GRANTED){ //если нет тех разрешений, которые нам нужны
-                        granted=false // просто оставляем false
-                        Toast.makeText(this, "Access Denied", Toast.LENGTH_SHORT ).show()//сообщение о том, что разрешение недоступно
+            if (grantResults.size > 0) { //проверка на то, что разрешения все таки выданы и они не отрицательные
+                for (i in grantResults) { // проверка на те разрешения, которые нас интересуют среди всех разрешений
+                    if (i != PackageManager.PERMISSION_GRANTED) { //если нет тех разрешений, которые нам нужны
+                        granted = false // просто оставляем false
+                        Toast.makeText(this, "Access Denied", Toast.LENGTH_SHORT)
+                            .show()//сообщение о том, что разрешение недоступно
                     }
                 }
-            }else{
-                granted=false //разрешение пришло, но мы его отклонили
+            } else {
+                granted = false //разрешение пришло, но мы его отклонили
             }
 
         }
@@ -158,7 +159,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
     private fun startRecordingNoise() {
         recordController.start()
         var backgroundTask = GlobalScope.launch {
-            while(switch){
+            while (switch) {
                 delay(500)
                 addDecibels()
             }
@@ -167,10 +168,10 @@ class MainActivity : AppCompatActivity() , LocationListener{
 
     }
 
-    private fun addDecibels(){
+    private fun addDecibels() {
         val volume = recordController.getVolume().toDouble()
         var decibels = Math.sqrt(volume) * 1.95
-        if(decibels > 160){
+        if (decibels > 160) {
             decibels = 160.0
         }
         decibelsArray.add(decibels)
@@ -184,38 +185,60 @@ class MainActivity : AppCompatActivity() , LocationListener{
         Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
 
-        // Проверка значения шума перед отправкой в Firebase
+        // Check sound value before uploading to Firebase
         if (decibelsArray.isNotEmpty()) {
             val averageDecibels = decibelsArray.average()
             if (averageDecibels < YOUR_THRESHOLD_VALUE || averageDecibels > ANOTHER_THRESHOLD_VALUE) {
                 Log.i("TAG", "Decibels value is out of range, not uploading to Firebase.")
-                return // Не выгружаем данные в Firebase, если значение шума не в допустимом диапазоне
+                return // Do not upload data to Firebase if sound value is not in the valid range
             }
         }
 
-        // Продолжаем с записью шума в Firebase, если прошли проверку
-        val db = FirebaseFirestore.getInstance()
-        val data = hashMapOf(
-            "address" to "your_address_value",
-            "sound" to decibelsArray.average().toString()
-        )
-        db.collection("sound")
-            .document("27.04.2024")
-            .set(data)
-            .addOnSuccessListener {
-                // Данные успешно отправлены
-            }
-            .addOnFailureListener { e ->
-                // Обработка ошибки
-            }
+        // Continue with uploading sound data to Firebase if the check passes
+        updateAverageSoundValueWithNewData()
     }
+
+    private fun updateAverageSoundValueWithNewData() {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection("sound").document("27.04.2024")
+
+        docRef.get().addOnSuccessListener { documentSnapshot ->
+            if (documentSnapshot.exists()) {
+                val currentData = documentSnapshot.data
+                val currentSoundValue = currentData?.get("sound") as String
+
+                // Calculate new average sound value between previous data and new data
+                val currentAverageSoundValue = currentSoundValue.toDouble()
+                val newAverageSoundValue = (currentAverageSoundValue + decibelsArray.average()) / 2
+
+                // Update the "sound" field in the database with the new average value
+                val dataToUpdate = hashMapOf(
+                    "address" to "your_address_value",
+                    "sound" to newAverageSoundValue.toString()
+                ) as HashMap<String, Any>
+
+                docRef.update(dataToUpdate).addOnSuccessListener {
+                    Log.i("TAG", "Document updated with new average sound value: $newAverageSoundValue")
+                }.addOnFailureListener { e ->
+                    Log.e("TAG", "Error updating document", e)
+                }
+            } else {
+                Log.e("TAG", "Document does not exist")
+            }
+        }.addOnFailureListener { e ->
+            Log.e("TAG", "Error getting document", e)
+        }
+    }
+
+
 
     override fun onLocationChanged(location: Location) {
         Log.v("MAPS_API", "Локация изменилась ${location.latitude} - ${location.longitude}")
     }
 
     companion object {
-        private const val YOUR_THRESHOLD_VALUE = 20.0 // Установите необходимые диапазоны значений шума
+        private const val YOUR_THRESHOLD_VALUE =
+            20.0 // Установите необходимые диапазоны значений шума
         private const val ANOTHER_THRESHOLD_VALUE = 160.0
     }
 }
