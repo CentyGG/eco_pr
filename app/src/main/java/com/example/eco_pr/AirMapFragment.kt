@@ -1,59 +1,177 @@
 package com.example.eco_pr
 
+import android.graphics.Color
+import android.location.Address
+import android.location.Geocoder
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.example.eco_pr.databinding.FragmentAirMapBinding
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolygonOptions
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import org.json.JSONObject
+import java.io.IOException
+import java.util.Locale
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+class AirMapFragment : Fragment(), OnMapReadyCallback {
 
-/**
- * A simple [Fragment] subclass.
- * Use the [AirMapFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
-class AirMapFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private lateinit var binding: FragmentAirMapBinding
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var mMap: GoogleMap
+    private val apiKey = "399161e1dbb1ab97bd00240c864bf5cbac035c2d"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_air_map, container, false)
+    ): View {
+        binding = FragmentAirMapBinding.inflate(inflater, container, false)
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val mapFragment = childFragmentManager.findFragmentById(R.id.airMapFragment) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+    }
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+
+        val lan = arguments?.getDouble(ARG_LATITUDE) ?: 52.28
+        val lon = arguments?.getDouble(ARG_LONGITUDE) ?: 104.3
+
+        Log.v("MAPS_API", "$lan - $lon")
+
+        val latLng = LatLng(lan, lon)
+        mMap.addMarker(MarkerOptions().position(latLng).title("I'm here!"))
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+
+        val cameraPosition = CameraPosition.Builder()
+            .target(latLng)
+            .zoom(15f)
+            .tilt(23f)
+            .bearing(10f)
+            .build()
+
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+
+        mMap.setOnMapClickListener {
+            val geocoder = Geocoder(requireContext(), Locale.getDefault())
+            var address: String = ""
+            val addresses: List<Address>? = geocoder.getFromLocation(it.latitude, it.longitude, 1)
+
+            if (addresses != null) {
+                for (adr in addresses) {
+                    address += adr.getAddressLine(addresses.indexOf(adr))
+                }
+            }
+
+            addAirQualityMarker(it, address)
+        }
+    }
+
+    private fun addAirQualityMarker(location: LatLng, address: String) {
+        val client = OkHttpClient()
+        val url = "https://api.waqi.info/feed/geo:${location.latitude};${location.longitude}/?token=$apiKey"
+
+        Log.v("API_TEST", "${location.latitude} : ${location.longitude}")
+
+        val vertices = calculateHexagonVertices(location.latitude, location.longitude, 0.05)
+
+        val polygonOptions = PolygonOptions()
+            .strokeColor(Color.RED)
+            .strokeWidth(2f)
+            .fillColor(Color.argb(100, 255, 0, 0))
+
+        for (i in 0 until 6) {
+            polygonOptions.add(LatLng(vertices[i][0], vertices[i][1]))
+        }
+
+        mMap.addPolygon(polygonOptions)
+
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val responseBody = response.body?.string()
+                responseBody?.let {
+                    val json = JSONObject(it)
+                    val status = json.getString("status")
+                    if (status == "ok") {
+                        val data = json.getJSONObject("data")
+                        val aqi = data.getInt("aqi")
+
+                        requireActivity().runOnUiThread {
+                            Log.v("API_TEST", aqi.toString())
+                            mMap.addMarker(
+                                MarkerOptions()
+                                    .position(location)
+                                    .title("Air Quality in ${address}: $aqi")
+                            )
+                        }
+                    } else {
+                        requireActivity().runOnUiThread {
+                            Log.v("API_TEST", "error")
+                        }
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+                requireActivity().runOnUiThread {
+                    Log.v("API_TEST", "failure")
+                }
+            }
+        })
+    }
+
+    private fun calculateHexagonVertices(centerLat: Double, centerLng: Double, radius: Double): Array<DoubleArray> {
+        val vertices = Array(6) { DoubleArray(2) }
+        var angleDeg: Double
+        var x: Double
+        var y: Double
+
+        for (i in 0 until 6) {
+            angleDeg = 60.0 * i
+            val angleRad = Math.toRadians(angleDeg)
+            x = centerLng + radius * Math.cos(angleRad)
+            y = centerLat + radius * Math.sin(angleRad)
+            vertices[i][0] = y
+            vertices[i][1] = x
+        }
+
+        return vertices
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AirMapFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AirMapFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+
+        const val ARG_LATITUDE = "ARG_LATITUDE"
+        const val ARG_LONGITUDE = "ARG_LONGITUDE"
+        fun newInstance(latitude: Double, longtitude: Double): AirMapFragment {
+            val args = Bundle()
+            args.putDouble(ARG_LATITUDE, latitude)
+            args.putDouble(ARG_LONGITUDE, longtitude)
+            val fragment = AirMapFragment()
+            fragment.arguments = args
+            return fragment
+        }
     }
 }
