@@ -1,10 +1,13 @@
+package com.example.eco_pr
+import RecordController
+import android.Manifest
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.eco_pr.databinding.ActivityMainBinding
 import android.os.CountDownTimer
 import android.util.Log
 import android.view.animation.OvershootInterpolator
 import androidx.core.app.ActivityCompat
+import com.example.eco_pr.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,7 +26,7 @@ class MainActivity : AppCompatActivity() {
         // Запрос разрешений
         ActivityCompat.requestPermissions(
             this,
-            arrayOf(android.Manifest.permission.RECORD_AUDIO),
+            arrayOf(Manifest.permission.RECORD_AUDIO),
             777
         )
 
