@@ -7,18 +7,16 @@ import android.location.LocationListener
 import android.location.LocationManager
 import com.example.eco_pr.R
 import RecordController
-import android.Manifest
+
 import android.os.Bundle
-import android.util.Log
+
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.WindowCompat
 import android.Manifest
 import android.view.Gravity
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
@@ -52,6 +50,21 @@ class MainActivity : AppCompatActivity() , LocationListener{
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Получение сервиса LocationManager
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+
+        // Инициализация RecordController
+        recordController = RecordController(this)
+
+        // Запрос разрешений
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.RECORD_AUDIO),
+            777
+        )
+
+        startRecordingNoise()
+
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -67,8 +80,6 @@ class MainActivity : AppCompatActivity() , LocationListener{
             granted = true // Устанавливаем флаг в true, если разрешение уже было предоставлено
         }
 
-        // Получение сервиса LocationManager
-        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         // Запрос обновлений местоположения с помощью GPS провайдера
         locationManager.requestLocationUpdates(
             LocationManager.GPS_PROVIDER,
@@ -95,9 +106,8 @@ class MainActivity : AppCompatActivity() , LocationListener{
             }
         }
 
-        navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        navController = navHostFragment.findNavController()
+        //navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        //navController = navHostFragment.findNavController()
 
         binding.searchB.setOnClickListener(object : View.OnClickListener {
             override fun onClick(p0: View?) {
@@ -135,33 +145,8 @@ class MainActivity : AppCompatActivity() , LocationListener{
             }else{
                 granted=false //разрешение пришло, но мы его отклонили
             }
-        // Инициализация RecordController
-        recordController = RecordController(this)
 
-        // Запрос разрешений
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.RECORD_AUDIO),
-            777
-        )
-
-        startRecordingNoise()
-        // Начать запись шума
-        val db = FirebaseFirestore.getInstance()
-        val data = hashMapOf(
-            "address" to "your_address_value",
-            "sound" to decibelsArray.average().toString()
-        )
-        db.collection("sound")
-            .document("27.04.2024")
-            .set(data)
-            .addOnSuccessListener {
-                // DocumentSnapshot added with ID: documentReference.id
-            }
-            .addOnFailureListener { e ->
-                // Log the error or handle the failure
-            }
-
+        }
     }
 
     override fun onStop() {
@@ -192,14 +177,27 @@ class MainActivity : AppCompatActivity() , LocationListener{
         Log.i("TAG", decibels.toString())
     }
 
-        }
-
 
     private fun stopRecordingNoise() {
         switch = false
         recordController.stop()
         Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
+        // Начать запись шума
+        val db = FirebaseFirestore.getInstance()
+        val data = hashMapOf(
+            "address" to "your_address_value",
+            "sound" to decibelsArray.average().toString()
+        )
+        db.collection("sound")
+            .document("27.04.2024")
+            .set(data)
+            .addOnSuccessListener {
+                // DocumentSnapshot added with ID: documentReference.id
+            }
+            .addOnFailureListener { e ->
+                // Log the error or handle the failure
+            }
     }
 
     override fun onLocationChanged(location: Location) {
