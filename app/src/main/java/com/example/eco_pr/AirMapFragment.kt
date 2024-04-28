@@ -75,6 +75,7 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
         mMap.setOnPolygonClickListener { polygon ->
             val center = polygon.tag as LatLng
             val data = locationsAirQualityMap[center]
+
             Toast.makeText(this.requireContext(), "Air Quality Index: ${data?.getInt("agi").toString()}", Toast.LENGTH_SHORT).show()
         }
     }

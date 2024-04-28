@@ -7,9 +7,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import com.example.eco_pr.R
 import RecordController
-
 import android.os.Bundle
-
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
