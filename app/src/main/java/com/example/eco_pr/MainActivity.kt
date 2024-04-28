@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
     private lateinit var recordController: RecordController
     private val decibelsArray: ArrayList<Double> = arrayListOf()
     private var switch:Boolean = true
-    private lateinit var location: Location
+    private var location: Location? = null
     private val LOCATION_PERMISSION_CODE = 2
     private var granted: Boolean = false
     private lateinit var airMapFragment: AirMapFragment
@@ -57,9 +57,10 @@ class MainActivity : AppCompatActivity() , LocationListener{
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+
         // Получение сервиса LocationManager
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-
+        requestLocationUpdates()
         // Инициализация RecordController
         recordController = RecordController(this)
 
@@ -97,15 +98,14 @@ class MainActivity : AppCompatActivity() , LocationListener{
         // Получение последнего местоположения
         val prv = locationManager.getBestProvider(Criteria(), true)
         if (prv != null) {
-            location =
-                locationManager.getLastKnownLocation(prv)!!
+            location = locationManager.getLastKnownLocation(prv)
             if (location != null) {
                 Log.v(
                     "MAPS_API",
-                    "Последнее местоположение: ${location.latitude} - ${location.longitude}"
+                    "Последнее местоположение: ${location?.latitude} - ${location?.longitude}"
                 )
                 airMapFragment =
-                    AirMapFragment.newInstance(location.latitude, location.longitude)
+                    AirMapFragment.newInstance(location!!.latitude, location!!.longitude)
                 supportFragmentManager
                     .beginTransaction()
                     .add(R.id.nav_host_fragment, airMapFragment)
@@ -121,36 +121,82 @@ class MainActivity : AppCompatActivity() , LocationListener{
             override fun onClick(p0: View?) {
                 binding.layerB.setOnClickListener(object : View.OnClickListener {
                     override fun onClick(p0: View?) {
-                        val dialog = MapChoiceSheet.newInstance(location.latitude, location.longitude)
+                        val dialog = MapChoiceSheet.newInstance(location?.latitude ?:55.6697114 ,
+                            location?.longitude ?:37.4810593
+                        )
                         dialog.show(supportFragmentManager, "MapChoiceSheet")
                     }
 
             })
         }})
         binding.updateB.setOnClickListener {
-            (airMapFragment as UpdateMapListener).updateMap()
+            if (::airMapFragment.isInitialized) {
+                (airMapFragment as UpdateMapListener).updateMap()
+            } else {
+                airMapFragment = AirMapFragment.newInstance(55.753995, 37.614069)
+                supportFragmentManager
+                    .beginTransaction()
+                    .add(R.id.nav_host_fragment, airMapFragment)
+                    .commit()
+            }
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int, // эта переменная возвращает значение от LPC в зависимости от того, выдано оно или нет
-        permissions: Array<out String>, //перечень разрешений
-        grantResults: IntArray //переменна, в которой содержится количество разрешений
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults) //обратная функция
-        if(requestCode == LOCATION_PERMISSION_CODE){ //проверка на то, является ли RC тем же разрешением
-            granted = true //если это так, то присваиваем true
-            if(grantResults.size>0){ //проверка на то, что разрешения все таки выданы и они не отрицательные
-                for( i in  grantResults){ // проверка на те разрешения, которые нас интересуют среди всех разрешений
-                    if (i != PackageManager.PERMISSION_GRANTED){ //если нет тех разрешений, которые нам нужны
-                        granted=false // просто оставляем false
-                        Toast.makeText(this, "Access Denied", Toast.LENGTH_SHORT ).show()//сообщение о том, что разрешение недоступно
-                    }
-                }
-            }else{
-                granted=false //разрешение пришло, но мы его отклонили
-            }
+    // Проверка и запрос разрешения на использование местоположения
+    fun checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // Перед запросом разрешения, рекомендуется объяснить пользователю, зачем ваше приложение нуждается в этом разрешении
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_CODE
+            )
+        } else {
+            // Разрешение уже предоставлено, можно выполнять операции с местоположением
+            // Например, запрос обновлений местоположения
+        }
+    }
 
+    // Метод обработки результата запроса разрешений
+    // Метод обработки результата запроса разрешений
+    private fun requestLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_CODE
+            )
+        } else {
+            startLocationUpdates()
+        }
+    }
+
+    private fun startLocationUpdates() {
+        try {
+            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                10000,
+                20f,
+                this
+            )
+        } catch (e: SecurityException) {
+            Log.e("LocationUpdate", "Unable to request location updates: ${e.message}")
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            LOCATION_PERMISSION_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Разрешение предоставлено, можно запросить обновления местоположения
+                    startLocationUpdates()
+                } else {
+                    // Разрешение не предоставлено, сообщите об этом пользователю
+                    Toast.makeText(this, "Доступ к местоположению запрещен", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -199,8 +245,8 @@ class MainActivity : AppCompatActivity() , LocationListener{
             val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
             val prv = locationManager.getBestProvider(Criteria(), true)
 
-            var latitude = 0.0
-            var longitude = 0.0
+            var latitude = 55.6697114
+            var longitude = 37.4810593
 
             if (prv != null) {
                 val location = locationManager.getLastKnownLocation(prv)
