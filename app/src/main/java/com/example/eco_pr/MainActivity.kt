@@ -130,6 +130,8 @@ class MainActivity : AppCompatActivity() , LocationListener{
             })
         }})
         binding.updateB.setOnClickListener {
+            val currentFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+            Toast.makeText(applicationContext,"${currentFragment.toString()}",Toast.LENGTH_LONG).show()
             if (::airMapFragment.isInitialized) {
                 (airMapFragment as UpdateMapListener).updateMap()
             } else {
