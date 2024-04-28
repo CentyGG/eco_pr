@@ -21,22 +21,14 @@
         android:textSize="20sp" />
 
 
-    <TextView
-        android:id="@+id/adres_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Адрес : "
-        android:layout_margin="8dp"
-        android:textStyle="bold"
-        android:layout_gravity="start"
-        android:textColor="@color/black"
-        android:textSize="20sp" />
+
 
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
         android:layout_height="wrap_content">
         <LinearLayout
             android:layout_width="match_parent"

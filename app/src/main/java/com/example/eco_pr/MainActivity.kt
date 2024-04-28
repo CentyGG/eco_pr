@@ -35,7 +35,9 @@ import java.text.ChoiceFormat.nextDouble
 import java.time.Instant
 import java.time.Instant.now
 import java.time.LocalDate.now
+import java.time.LocalDateTime
 import java.time.LocalDateTime.now
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -96,7 +98,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
         val prv = locationManager.getBestProvider(Criteria(), true)
         if (prv != null) {
             location =
-                locationManager.getLastKnownLocation(prv)!! // Получение последнего местоположения
+                locationManager.getLastKnownLocation(prv)!!
             if (location != null) {
                 Log.v(
                     "MAPS_API",
@@ -187,23 +189,42 @@ class MainActivity : AppCompatActivity() , LocationListener{
         Log.i("TAG", "_________")
         Log.i("TAG", decibelsArray.average().toString())
         // Начать запись шума
+        val currentDateTime = LocalDateTime.now()
+        val formattedDateTime = currentDateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy.HH.mm.ss"))
+
+        // Получить экземпляр Firebase Firestore
         val db = FirebaseFirestore.getInstance()
-        var i = 37.352366509
-        var j = 55.575162222
-        while (i < 37.850871148){
-            while(j < 55.903656382){
+
+        try {
+            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+            val prv = locationManager.getBestProvider(Criteria(), true)
+
+            var latitude = 0.0
+            var longitude = 0.0
+
+            if (prv != null) {
+                val location = locationManager.getLastKnownLocation(prv)
+                if (location != null) {
+                    latitude = location.latitude
+                    longitude = location.longitude
+                }
                 val data = hashMapOf(
-                    "latitude" to j,
-                    "longitude" to i,
+                    "id" to formattedDateTime,
+                    "latitude" to latitude,
+                    "longitude" to longitude,
                     "sound" to kotlin.random.Random.nextDouble(74.0, 83.0)
                 )
                 db.collection("sound")
                     .add(data)
                     .addOnSuccessListener { Log.i("TAG", "Success") }
-                    .addOnFailureListener {  Log.i("TAG", "Error")}
-                j += 0.0000001
+                    .addOnFailureListener {  Log.i("TAG", "Error") }
+            } else {
+                Log.e("TAG", "Provider is null")
             }
-            i += 0.0000001
+        } catch (e: SecurityException) {
+            Log.e("TAG", "Security exception occurred: ${e.message}")
+        } catch (e: Exception) {
+            Log.e("TAG", "Error occurred: ${e.message}")
         }
     }
 

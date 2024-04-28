@@ -1,5 +1,6 @@
 package com.example.eco_pr
 
+import BottomSheetFragmentAir
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
@@ -75,8 +76,12 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
         mMap.setOnPolygonClickListener { polygon ->
             val center = polygon.tag as LatLng
             val data = locationsAirQualityMap[center]
+            val aqi = data?.getInt("aqi") ?: 0
+            val city = data?.optString("city") ?: ""
 
-            Toast.makeText(this.requireContext(), "Air Quality Index: ${data?.getInt("agi").toString()}", Toast.LENGTH_SHORT).show()
+            val dialog = BottomSheetFragmentAir.newInstance(aqi, city)
+            dialog.show(childFragmentManager, "BottomSheetFragment")
+
         }
     }
 
