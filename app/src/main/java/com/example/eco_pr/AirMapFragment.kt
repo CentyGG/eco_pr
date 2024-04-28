@@ -85,9 +85,9 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
         }
     }
 
-    private fun getAirQualityFromLocation(location: LatLng, hexagonCenter: LatLng, hexagonRadius: Double) {
+    private fun getAirQualityFromLocation(hexagonCenter: LatLng, hexagonRadius: Double) {
         val client = OkHttpClient()
-        val url = "https://api.waqi.info/feed/geo:${location.latitude};${location.longitude}/?token=$apiKey"
+        val url = "https://api.waqi.info/feed/geo:${hexagonCenter.latitude};${hexagonCenter.longitude}/?token=$apiKey"
 
         val request = Request.Builder()
             .url(url)
@@ -103,6 +103,7 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
                         val data = json.getJSONObject("data")
 
                         requireActivity().runOnUiThread {
+                            Log.v("API_TEST", "Center: ${hexagonCenter.latitude}:${hexagonCenter.longitude}. Ответ апи: ${data.getString("city")}")
                             val vertices = calculateHexagonVertices(hexagonCenter.latitude, hexagonCenter.longitude, hexagonRadius)
                             drawHexagon(hexagonCenter, vertices, data)
                         }
@@ -212,7 +213,7 @@ class AirMapFragment : Fragment(), OnMapReadyCallback, UpdateMapListener {
         }
 
         for (center in hexagonCenters) {
-            getAirQualityFromLocation(center, center, hexagonRadius)
+            getAirQualityFromLocation(center, hexagonRadius)
         }
 
     }
